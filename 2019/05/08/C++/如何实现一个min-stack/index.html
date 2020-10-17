@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Q: 如何设计一个特殊的栈,支持min()操作,返回栈中的最小元素. 这个问题来源于去年面试遇到的一道题目,面试官给了20分钟时间让设计这样一个栈.当时时间有限,虽然写出来了一个版本,但是那个版本还存在很多的问题,比如不够通用,只能支持int类型数据;同时,效率也不高, 存在大量的数据拷贝.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何实现一个min stack">
+<meta property="og:url" content="http://example.com/2019/05/08/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAmin-stack/index.html">
+<meta property="og:site_name" content="Vincent&#39;s Blog">
+<meta property="og:description" content="Q: 如何设计一个特殊的栈,支持min()操作,返回栈中的最小元素. 这个问题来源于去年面试遇到的一道题目,面试官给了20分钟时间让设计这样一个栈.当时时间有限,虽然写出来了一个版本,但是那个版本还存在很多的问题,比如不够通用,只能支持int类型数据;同时,效率也不高, 存在大量的数据拷贝.">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-05-08T14:00:07.000Z">
+<meta property="article:modified_time" content="2020-10-17T07:23:17.419Z">
+<meta property="article:author" content="Vincent Zheng">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2019/05/08/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAmin-stack/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>如何实现一个min stack | Vincent's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Vincent's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2019/05/08/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAmin-stack/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Vincent Zheng">
+      <meta itemprop="description" content="A bug machine made in HUST">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vincent's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何实现一个min stack
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-05-08 22:00:07" itemprop="dateCreated datePublished" datetime="2019-05-08T22:00:07+08:00">2019-05-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Q: 如何设计一个特殊的栈,支持min()操作,返回栈中的最小元素.</p>
+<p>这个问题来源于去年面试遇到的一道题目,面试官给了20分钟时间让设计这样一个栈.当时时间有限,虽然写出来了一个版本,但是那个版本还存在很多的问题,比如不够通用,只能支持<code>int</code>类型数据;同时,效率也不高, 存在大量的数据拷贝.</p>
+<a id="more"></a>
+
+<p>面试完后又仔细思考了一下,重新写了一个版本,记录一下,分享给大家！这个版本主要解决前面说的两个问题,1.通用性;2.效率.</p>
+<h2 id="1-接口设计"><a href="#1-接口设计" class="headerlink" title="1. 接口设计"></a>1. 接口设计</h2><p>既然要解决通用性的问题,让这个栈支持所有的数据类型,必须使用<code>template</code>.</p>
+<p>同时,为了支持<code>min()</code>操作,我们需要两个数组.数组a保存push到栈中的数据,数组b记录最小值,数组a每做一次更新(push或者pop),数组b都要随之更新.</p>
+<p>再仔细想一下,数组b真的需要保存最小值吗?其实在数组a中已经有了最小值得一份拷贝,在b数组中再存一次会造成空间浪费,而且如果存储在栈中的是一个非常庞大的类类型,把该类型数据写入b数组也是相当耗时的.这样就造成了空间和时间上的双重浪费,显然这是不合理的.事实上,在b数组中完全没有必要存储实际的类对象,只要存储一下该对象在a数组中的索引就可以了,这样既节省空间,又提高了速度.</p>
+<p>基于上面的分析,我们可以设计下面的接口.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">class</span> <span class="title">stack</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="comment">// 栈的top指针</span></span><br><span class="line">  <span class="keyword">int</span>   top;           </span><br><span class="line">  <span class="comment">// 最小值top指针</span></span><br><span class="line">  <span class="keyword">int</span>   minTop;        </span><br><span class="line">  T     buf[<span class="number">1024</span>]; </span><br><span class="line">  <span class="comment">// 记录最小值索引             </span></span><br><span class="line">  <span class="keyword">int</span>   minIndex[<span class="number">1024</span>];</span><br><span class="line">  <span class="keyword">const</span> <span class="keyword">int</span>  maxsize = <span class="number">1024</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">push</span><span class="params">(<span class="keyword">const</span> T&amp; item)</span></span>;</span><br><span class="line">  <span class="function">T   <span class="title">pop</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="comment">//更新最小值索引</span></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">pushMinIndex</span><span class="params">(<span class="keyword">const</span> T&amp; item)</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">popMinIndex</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function">T   <span class="title">min</span><span class="params">()</span></span>; <span class="comment">// 返回最小值</span></span><br><span class="line">  <span class="built_in">stack</span>();</span><br><span class="line">  <span class="built_in">stack</span>(<span class="keyword">const</span> <span class="built_in">stack</span>&amp; s);</span><br><span class="line">  <span class="built_in">stack</span>&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> <span class="built_in">stack</span>&amp; s);</span><br><span class="line">  ~<span class="built_in">stack</span>();</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-接口实现"><a href="#2-接口实现" class="headerlink" title="2.接口实现"></a>2.接口实现</h2><p>基于上面的设计,我们可以轻松写出代码来.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> MY_STACK_H</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MY_STACK_H</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;cassert&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ERROR -1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> OK   0</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">class</span> <span class="title">stack</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="keyword">int</span>     top;</span><br><span class="line">  <span class="keyword">int</span>     minTop;</span><br><span class="line">  T       buf[<span class="number">1024</span>];</span><br><span class="line">  <span class="keyword">int</span>     minIndex[<span class="number">1024</span>];</span><br><span class="line">  <span class="keyword">const</span> <span class="keyword">int</span>   maxsize = <span class="number">1024</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">push</span><span class="params">(<span class="keyword">const</span> T&amp; item)</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">pushMinIndex</span><span class="params">(<span class="keyword">const</span> T&amp; item)</span></span>;</span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">popMinIndex</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function">T   <span class="title">min</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="function">T   <span class="title">pop</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="built_in">stack</span>();</span><br><span class="line">  <span class="built_in">stack</span>(<span class="keyword">const</span> <span class="built_in">stack</span>&amp; s);</span><br><span class="line">  <span class="built_in">stack</span>&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> <span class="built_in">stack</span>&amp; s);</span><br><span class="line">  ~<span class="built_in">stack</span>();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">stack</span>&lt;T&gt;:</span>:<span class="built_in">stack</span>():top(<span class="number">-1</span>), minTop(<span class="number">-1</span>) </span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">stack</span>&lt;T&gt;:</span>:~<span class="built_in">stack</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">int</span> <span class="title">stack</span>&lt;T&gt;:</span>:push(<span class="keyword">const</span> T&amp; item)</span><br><span class="line">&#123;</span><br><span class="line">  top++;</span><br><span class="line">  <span class="keyword">if</span> ((top &gt;= maxsize) || (top &lt; <span class="number">0</span>)) &#123;</span><br><span class="line">    <span class="keyword">return</span> ERROR;</span><br><span class="line">  &#125;</span><br><span class="line">  buf[top] = item;</span><br><span class="line">  pushMinIndex(item);</span><br><span class="line">  <span class="keyword">return</span> OK;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">T</span> <span class="title">stack</span>&lt;T&gt;:</span>:pop() </span><br><span class="line">&#123;</span><br><span class="line">  assert(top &gt;= <span class="number">0</span>);</span><br><span class="line">  popMinIndex();</span><br><span class="line">  <span class="keyword">return</span> buf[top--];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 关键函数,保存最小值索引</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt; </span></span><br><span class="line"><span class="class"><span class="title">int</span> <span class="title">stack</span>&lt;T&gt;:</span>:pushMinIndex(<span class="keyword">const</span> T&amp; item)</span><br><span class="line">&#123;</span><br><span class="line">  minTop++;</span><br><span class="line">  <span class="keyword">if</span> ((minTop &gt;= maxsize) || (minTop &lt; <span class="number">0</span>)) &#123;</span><br><span class="line">    <span class="keyword">return</span> ERROR;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (minTop == <span class="number">0</span>) &#123;</span><br><span class="line">    minIndex[minTop] = top;</span><br><span class="line">    <span class="keyword">return</span> OK;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (item &lt; buf[minIndex[minTop - <span class="number">1</span>]]) &#123;</span><br><span class="line">    minIndex[minTop] = top;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    minIndex[minTop] = minIndex[minTop - <span class="number">1</span>];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> OK;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">int</span> <span class="title">stack</span>&lt;T&gt;:</span>:popMinIndex()</span><br><span class="line">&#123;</span><br><span class="line">  minTop--;</span><br><span class="line">  <span class="keyword">return</span> OK;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">T</span> <span class="title">stack</span>&lt;T&gt;:</span>:min()</span><br><span class="line">&#123;</span><br><span class="line">  assert(minTop &gt;= <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">return</span> buf[minIndex[minTop]];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 拷贝构造函数和赋值运算符重载,标配</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">stack</span>&lt;T&gt;:</span>:<span class="built_in">stack</span>(<span class="keyword">const</span> <span class="built_in">stack</span>&lt;T&gt;&amp; s):top(s.top), minTop(s.minTop)</span><br><span class="line">&#123;</span><br><span class="line">  top = s.top;</span><br><span class="line">  minTop = s.minTop;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt;= top; i++) &#123;</span><br><span class="line">    buf[i] = s.buf[i];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt;= minTop; i++) &#123;</span><br><span class="line">    minIndex[i] = s.minIndex[i];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="title">stack</span>&lt;T&gt;&amp; <span class="title">stack</span>&lt;T&gt;:</span>:<span class="keyword">operator</span>=(<span class="keyword">const</span> <span class="built_in">stack</span>&lt;T&gt;&amp; s)</span><br><span class="line">&#123;</span><br><span class="line">  top = s.top;</span><br><span class="line">  minTop = s.minTop;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt;= top; i++) &#123;</span><br><span class="line">    buf[i] = s.buf[i];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt;= minTop; i++) &#123;</span><br><span class="line">    minIndex[i] = s.minIndex[i];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<h2 id="3-测试一下"><a href="#3-测试一下" class="headerlink" title="3. 测试一下"></a>3. 测试一下</h2><p>我们写一个小例子测试一下自己写的stack是否好用.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&quot;minstack.hpp&quot;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">stack</span>&lt;<span class="keyword">double</span>&gt; s;</span><br><span class="line">  <span class="keyword">double</span> a[] = &#123;<span class="number">8.1</span>, <span class="number">7.2</span>, <span class="number">9.5</span>, <span class="number">6.3</span>, <span class="number">2.5</span>, <span class="number">5.6</span>, <span class="number">3.5</span>&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">7</span>; i++) &#123;</span><br><span class="line">    s.push(a[i]);</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; s.min() &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">cout</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">  <span class="built_in">stack</span>&lt;<span class="keyword">double</span>&gt; t;</span><br><span class="line">  t = s;</span><br><span class="line">  <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;---------------------------&quot;</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">7</span>; i++) &#123;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; t.min() &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">    t.pop();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译一下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -g main.cpp -Wall</span><br></pre></td></tr></table></figure>
+<p>运行结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ .&#x2F;a.out</span><br><span class="line">8.1 7.2 7.2 6.3 2.5 2.5 2.5</span><br><span class="line">---------------------------</span><br><span class="line">2.5 2.5 2.5 6.3 7.2 7.2 8.1</span><br></pre></td></tr></table></figure>
+<p>看起来没什么问题哦~<br>代码已上传至github，链接在此<br><a target="_blank" rel="noopener" href="https://github.com/zkangHUST/CppSTL">https://github.com/zkangHUST/CppSTL</a></p>
+<p>THE END.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/03/15/C++/%E6%8C%87%E9%92%88%E5%92%8C%E5%BC%95%E7%94%A8-md/" rel="prev" title="指针和引用">
+      <i class="fa fa-chevron-left"></i> 指针和引用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/05/27/C++/GDB%E8%B0%83%E8%AF%95%E6%8A%80%E5%B7%A7-%E6%89%93%E5%8D%B0vector%E7%9A%84%E5%85%83%E7%B4%A0%E5%80%BC/" rel="next" title="GDB调试技巧-打印vector的元素值">
+      GDB调试技巧-打印vector的元素值 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E6%8E%A5%E5%8F%A3%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.</span> <span class="nav-text">1. 接口设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">2.接口实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%B5%8B%E8%AF%95%E4%B8%80%E4%B8%8B"><span class="nav-number">3.</span> <span class="nav-text">3. 测试一下</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Vincent Zheng"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Vincent Zheng</p>
+  <div class="site-description" itemprop="description">A bug machine made in HUST</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zkangHUST" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zkangHUST" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:vincent.zheng@zoom.us" title="E-Mail → mailto:vincent.zheng@zoom.us" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://yoursite.com/" title="http:&#x2F;&#x2F;yoursite.com" rel="noopener" target="_blank">Title</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vincent Zheng</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

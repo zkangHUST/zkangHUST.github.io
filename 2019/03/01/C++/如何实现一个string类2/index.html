@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="上一篇文章实现了myString类的构造函数、拷贝构造函数和析构函数，并且重载了&lt;&lt;运算符。这篇文章来讨论一下赋值运算、下标操作和+&#x3D;拼接字符串操作。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何实现一个string类(2)">
+<meta property="og:url" content="http://example.com/2019/03/01/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAstring%E7%B1%BB2/index.html">
+<meta property="og:site_name" content="Vincent&#39;s Blog">
+<meta property="og:description" content="上一篇文章实现了myString类的构造函数、拷贝构造函数和析构函数，并且重载了&lt;&lt;运算符。这篇文章来讨论一下赋值运算、下标操作和+&#x3D;拼接字符串操作。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-03-01T04:07:02.000Z">
+<meta property="article:modified_time" content="2020-10-17T07:23:17.420Z">
+<meta property="article:author" content="Vincent Zheng">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2019/03/01/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAstring%E7%B1%BB2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>如何实现一个string类(2) | Vincent's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Vincent's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2019/03/01/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAstring%E7%B1%BB2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Vincent Zheng">
+      <meta itemprop="description" content="A bug machine made in HUST">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vincent's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何实现一个string类(2)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-03-01 12:07:02" itemprop="dateCreated datePublished" datetime="2019-03-01T12:07:02+08:00">2019-03-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>上一篇文章实现了myString类的构造函数、拷贝构造函数和析构函数，并且重载了&lt;&lt;运算符。这篇文章来讨论一下赋值运算、下标操作和+=拼接字符串操作。</p>
+<a id="more"></a>
+<h2 id="1-赋值运算符重载"><a href="#1-赋值运算符重载" class="headerlink" title="1. 赋值运算符重载"></a>1. 赋值运算符重载</h2><p>首先来看一下赋值运算符重载。在实际应用中，我们经常遇到需要将一个对象赋值给另外一个对象的情况，那么就需要使用赋值运算符=。跟默认的拷贝构造函数一样，如果我们没有显式地定义一个赋值运算符重载函数，那么编译器会提供一个默认的函数实现赋值功能。大暖男再次出场，不出意外地再次不靠谱。编译器提供的赋值运算函数只是将一个对象的成员变量挨个赋值给另一个对象的成员变量。假如有两个myString对象a和b，执行a=b相当于执行下面这段代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">a.p &#x3D; b.p;</span><br><span class="line">a.len &#x3D; b.len;</span><br><span class="line">a.size &#x3D; b.size;</span><br></pre></td></tr></table></figure>
+<p>由此可见，默认拷贝构造函数存在的问题(也就是浅拷贝带来的问题)同样存在于默认赋值运算符函数中。<br>问题一样，那么解决办法也一样。我们重载一下赋值运算符，在函数中进行深拷贝即可。赋值运算符重载函数实现如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">myString&amp; myString::operator&#x3D; (const myString&amp; s)</span><br><span class="line">&#123;</span><br><span class="line">    if (&amp;s &#x3D;&#x3D; this) &#123;</span><br><span class="line">        return *this;</span><br><span class="line">    &#125;</span><br><span class="line">    delete[] p;</span><br><span class="line">    size &#x3D; s.size;</span><br><span class="line">    p &#x3D; new char[size + 1];</span><br><span class="line">    strncpy(p, s.p, s.len);</span><br><span class="line">    p[s.len] &#x3D; &#39;\0&#39;;</span><br><span class="line">    len &#x3D; s.len;</span><br><span class="line">    return *this;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>赋值运算符函数不会改变右值，因此可以把传入的参数设置为const。另外赋值运算符重载函数还需要注意两个问题：</p>
+<ol>
+<li>执行a=b，首先需要把a对象原有的内存块释放掉，重新申请内存。然后把b对象存储的字符串拷贝过来，同时记得更新size和len。</li>
+<li>避免自己赋值给自己。如果写了一行代码a=a，那么根据第一条，首先把a的内存块给释放掉了，然后执行拷贝，但是这个时候p已经变成野指针了，访问野指针可能造成程序崩溃。因此在函数中，首先要判断传进来的myString是不是自己本身。如果是的话，那么什么也不干，直接返回*this。</li>
+</ol>
+<h2 id="2-下标访问符-重载"><a href="#2-下标访问符-重载" class="headerlink" title="2.下标访问符[]重载"></a>2.下标访问符[]重载</h2><p>我们希望myString类像数组一样，支持下标操作，这样就可以通过索引访问和修改字符串中的某个字符。实现这个功能就需要重载[]操作符。下标访问符重载可以写成下面这样，这也是网上最常见的写法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">char myString::operator[] (const int index)</span><br><span class="line">&#123;</span><br><span class="line">    return p[index]; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个函数就是这么简单，短短一行，不争不抢，岁月静好！但是这样的代码提交上去，你一定会被你同事拿刀追着砍！为什么？</p>
+<p>因为这个版本存在非常严重的问题！看一下这个测试程序：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    char c;</span><br><span class="line">    myString s(&quot;hello&quot;);</span><br><span class="line">    c &#x3D; s[0];           &#x2F;&#x2F; 正确</span><br><span class="line">    s[0] &#x3D; &#39;H&#39;;         &#x2F;&#x2F; 错误</span><br><span class="line">    c &#x3D; s[10];        &#x2F;&#x2F; 错误</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个程序执行第1、2、3行没有问题。第4行把s[0]修改为’H’，出问题了，因为重载的<code>[]</code>函数返回的是char类型，是可读不可写的，如果给它赋值(a[0] = ‘C’)编译器会报错。</p>
+<p>第5行也有问题，显然索引越界了。如果是数组，索引越界会造成段错误，马上引起程序崩溃。这其实是一个相对较好的结果，因为我们可以迅速定位到程序崩溃的位置把这个bug修复掉。但是在我们的myString类中内存是动态申请的，即使索引越界，编译器编译不会报错，并且运行时也不会引起程序崩溃。但是它造成的后果更为严重，因为它会改写其他内存位置的内容，破坏数据，造成莫名其妙的运行结果。这种bug找起来简直要人命。</p>
+<p>一行代码引入了两个bug，这是何等的卧槽啊！</p>
+<p>要解决第一个问题，函数必须返回一个引用；要解决第二个问题，必须在函数中进行索引越界校验。因此我们可以把重载<code>[]</code>函数改为下面这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">char&amp; myString::operator[] (const int index)</span><br><span class="line">&#123;</span><br><span class="line">    &#x2F;&#x2F; 确保索引没有越界</span><br><span class="line">    assert(index &gt;&#x3D;0  &amp;&amp; index &lt; len);</span><br><span class="line">    return p[index]; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个版本把返回值改为引用，同时在函数内部加了一行断言。断言可以检查索引是否越界，如果越界就“温柔”地结束程序，并打印出错误信息。这样可以大幅提高程序的健壮性。我们来测试一下看看：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    myString a(&quot;hello,world&quot;);</span><br><span class="line">    a[0] &#x3D; &#39;H&#39;;</span><br><span class="line">    cout &lt;&lt; a &lt;&lt; endl;</span><br><span class="line">    a[20] &#x3D; &#39;z&#39;;</span><br><span class="line">    cout &lt;&lt; a &lt;&lt; endl;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行这段代码的结果是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ .&#x2F;a.exe</span><br><span class="line">Hello,world</span><br><span class="line">Assertion failed: index &gt;&#x3D;0 &amp;&amp; index &lt; len, file mystring.cpp, line 93</span><br></pre></td></tr></table></figure>
+<p>可见执行到第4行，程序结束，并且打印出了结束时那代码所在的文件和行数，assert真是贴心呢！</p>
+<h2 id="3-重载函数"><a href="#3-重载函数" class="headerlink" title="3.+=重载函数"></a>3.+=重载函数</h2><p>string类提供了很多字符串拼接操作，用起来非常方便。比如用<code>a+=&quot;world&quot;</code>就可以把<code>&quot;world&quot;</code>字符串拼接到a对象的末尾。我们也来实现一下这个功能。</p>
+<p>我们定义两个<code>+=</code>函数，一个支持拼接c风格字符串，一个支持拼接myString对象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">myString&amp; operator+(const char* s);</span><br><span class="line">myString&amp; operator+(const myString&amp; s);</span><br></pre></td></tr></table></figure>
+<p>实现这两个函数需要注意一些问题：</p>
+<ol>
+<li>如果传入的字符串过长，需要截断。拼接后的字符串长度不能超过max_size</li>
+<li>如果this对象的空间足够，那么直接在原来的字符串基础上追加传入的字符串</li>
+<li>如果this对象空间不够，那么需要重新申请空间，把原来空间的内容全部拷贝过来，然后在后面追加传入的字符串。</li>
+<li>记得释放原来的空间，并且把this对象的p指针指向新空间，更新size和len。</li>
+</ol>
+<p>这两个函数的实现如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 重载+&#x3D;</span><br><span class="line">myString&amp; myString::operator+&#x3D; (const char* s)</span><br><span class="line">&#123;</span><br><span class="line">    len +&#x3D; strlen(s);</span><br><span class="line">    len &#x3D; len &gt; max_size ? max_size : len;</span><br><span class="line">    if (size &gt; len) &#123;</span><br><span class="line">        strncat(p, s, size - strlen(p));</span><br><span class="line">        p[size] &#x3D; &#39;\0&#39;;</span><br><span class="line">        return *this;</span><br><span class="line">    &#125;</span><br><span class="line">    while (size &lt; len) &#123;</span><br><span class="line">        size *&#x3D; 2;</span><br><span class="line">    &#125;</span><br><span class="line">    char *tmp &#x3D; new char[size + 1];</span><br><span class="line">    strncpy(tmp, p, strlen(p));</span><br><span class="line">    tmp[strlen(p)] &#x3D; &#39;\0&#39;;</span><br><span class="line">    strncat(tmp, s, size - strlen(p));</span><br><span class="line">    tmp[size] &#x3D; &#39;\0&#39;;</span><br><span class="line">    delete[] p;</span><br><span class="line">    p &#x3D; tmp;</span><br><span class="line">    return *this;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">myString&amp; myString::operator+&#x3D; (const myString&amp; s)</span><br><span class="line">&#123;</span><br><span class="line">    len +&#x3D; s.len;</span><br><span class="line">    len &#x3D; len &gt; max_size ? max_size : len;</span><br><span class="line">    if (size &gt; len) &#123;</span><br><span class="line">        strncat(p, s.p, size - strlen(p));</span><br><span class="line">        p[size] &#x3D; &#39;\0&#39;;</span><br><span class="line">        return *this;</span><br><span class="line">    &#125;</span><br><span class="line">    while (size &lt; len) &#123;</span><br><span class="line">        size *&#x3D; 2;</span><br><span class="line">    &#125;</span><br><span class="line">    char *tmp &#x3D; new char[size + 1];</span><br><span class="line">    strncpy(tmp, p, strlen(p));</span><br><span class="line">    tmp[strlen(p)] &#x3D; &#39;\0&#39;;</span><br><span class="line">    strncat(tmp, s.p, size - strlen(p));</span><br><span class="line">    tmp[size] &#x3D; &#39;\0&#39;;</span><br><span class="line">    delete[] p;</span><br><span class="line">    p &#x3D; tmp;</span><br><span class="line">    return *this;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这两个函数的实现大部分是一致的，不再啰嗦了。现在，可以通过+=符号来拼接字符串了，试一下看看！</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">int main() </span><br><span class="line">&#123;</span><br><span class="line">    myString a(&quot;This is a test &quot;), b(&quot;program &quot;);</span><br><span class="line">    cout &lt;&lt; a &lt;&lt; endl;</span><br><span class="line">    a +&#x3D; b;</span><br><span class="line">    cout &lt;&lt; a &lt;&lt; endl;</span><br><span class="line">    a +&#x3D; &quot;written by Z.K.&quot;;</span><br><span class="line">    cout &lt;&lt; a;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码执行结果为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ .&#x2F;a.exe</span><br><span class="line">This is a test</span><br><span class="line">This is a test program</span><br><span class="line">This is a test program written by Z.K.</span><br></pre></td></tr></table></figure>
+<p>嗯，看来可以正常工作！</p>
+<h2 id="4-总结"><a href="#4-总结" class="headerlink" title="4.总结"></a>4.总结</h2><p>这篇文章实现了赋值、下标访问和+=拼接字符串操作，下一篇继续实现myString类其他的功能。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/02/28/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAstring%E7%B1%BB/" rel="prev" title="如何实现一个string类(1)">
+      <i class="fa fa-chevron-left"></i> 如何实现一个string类(1)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/03/02/C++/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3static%E5%85%B3%E9%94%AE%E5%AD%97/" rel="next" title="深入理解static关键字(1)">
+      深入理解static关键字(1) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6%E9%87%8D%E8%BD%BD"><span class="nav-number">1.</span> <span class="nav-text">1. 赋值运算符重载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%B8%8B%E6%A0%87%E8%AE%BF%E9%97%AE%E7%AC%A6-%E9%87%8D%E8%BD%BD"><span class="nav-number">2.</span> <span class="nav-text">2.下标访问符[]重载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E9%87%8D%E8%BD%BD%E5%87%BD%E6%95%B0"><span class="nav-number">3.</span> <span class="nav-text">3.+&#x3D;重载函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">4.总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Vincent Zheng"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Vincent Zheng</p>
+  <div class="site-description" itemprop="description">A bug machine made in HUST</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zkangHUST" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zkangHUST" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:vincent.zheng@zoom.us" title="E-Mail → mailto:vincent.zheng@zoom.us" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://yoursite.com/" title="http:&#x2F;&#x2F;yoursite.com" rel="noopener" target="_blank">Title</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vincent Zheng</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

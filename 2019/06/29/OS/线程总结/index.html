@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="0.进程和线程对比 进程有自己的虚拟地址空间，线程没有 进程包含的内容有：地址空间、全局变量、打开的文件、子进程、定时器、信号和信号处理程序等 线程包含的东西有：程序计数器、寄存器、栈和状态(条件码)。每个线程都有自己的栈，但是堆是共享的。 多个线程运行在单一进程的上下文中，共享进程虚拟地址空间的所有内容，包括代码，数据，堆，共享库和打开的文件等。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="线程总结">
+<meta property="og:url" content="http://example.com/2019/06/29/OS/%E7%BA%BF%E7%A8%8B%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="Vincent&#39;s Blog">
+<meta property="og:description" content="0.进程和线程对比 进程有自己的虚拟地址空间，线程没有 进程包含的内容有：地址空间、全局变量、打开的文件、子进程、定时器、信号和信号处理程序等 线程包含的东西有：程序计数器、寄存器、栈和状态(条件码)。每个线程都有自己的栈，但是堆是共享的。 多个线程运行在单一进程的上下文中，共享进程虚拟地址空间的所有内容，包括代码，数据，堆，共享库和打开的文件等。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-06-29T04:20:56.000Z">
+<meta property="article:modified_time" content="2020-10-17T11:53:49.712Z">
+<meta property="article:author" content="Vincent Zheng">
+<meta property="article:tag" content="OS">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2019/06/29/OS/%E7%BA%BF%E7%A8%8B%E6%80%BB%E7%BB%93/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>线程总结 | Vincent's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Vincent's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2019/06/29/OS/%E7%BA%BF%E7%A8%8B%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Vincent Zheng">
+      <meta itemprop="description" content="A bug machine made in HUST">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vincent's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          线程总结
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-06-29 12:20:56" itemprop="dateCreated datePublished" datetime="2019-06-29T12:20:56+08:00">2019-06-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-17 19:53:49" itemprop="dateModified" datetime="2020-10-17T19:53:49+08:00">2020-10-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="0-进程和线程对比"><a href="#0-进程和线程对比" class="headerlink" title="0.进程和线程对比"></a>0.进程和线程对比</h2><ul>
+<li>进程有自己的虚拟地址空间，线程没有</li>
+<li>进程包含的内容有：地址空间、全局变量、打开的文件、子进程、定时器、信号和信号处理程序等</li>
+<li>线程包含的东西有：程序计数器、寄存器、栈和状态(条件码)。每个线程都有自己的栈，但是堆是共享的。</li>
+<li>多个线程运行在单一进程的上下文中，共享进程虚拟地址空间的所有内容，包括代码，数据，堆，共享库和打开的文件等。</li>
+</ul>
+<a id="more"></a>
+
+<h2 id="1-线程ID"><a href="#1-线程ID" class="headerlink" title="1. 线程ID"></a>1. 线程ID</h2><p>线程ID的类型是<code>pthread_t</code>，它是一个结构体。《CASPP》上说线程ID是一个整数，其实仅限于Linux系统，不同的系统采用不同的数据类型来表示线程ID。</p>
+<table>
+<thead>
+<tr>
+<th>系统</th>
+<th>线程ID数据类型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>linux 3.2.0</td>
+<td>unsigned long</td>
+</tr>
+<tr>
+<td>Solaris 10</td>
+<td>unsigned int</td>
+</tr>
+<tr>
+<td>FreeBSD 8.0</td>
+<td>pthread*</td>
+</tr>
+<tr>
+<td>Mac OS X 10.6.8</td>
+<td>pthread*</td>
+</tr>
+</tbody></table>
+<p>线程可以使用<code>pthread_self</code>函数获取自己的ID。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">pthread_t</span> <span class="title">pthread_self</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>判断两个线程ID是否相等，需要使用<code>pthread_equal</code>函数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//相等返回非0, 不等返回0</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_equal</span><span class="params">(<span class="keyword">pthread_t</span> tid1, <span class="keyword">pthread_t</span> tid2)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-线程创建"><a href="#2-线程创建" class="headerlink" title="2.线程创建"></a>2.线程创建</h2><p><code>pthread_create</code>函数用于创建线程。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_create</span><span class="params">(<span class="keyword">pthread_t</span> *tidp, <span class="keyword">const</span> <span class="keyword">pthread_attr_t</span> *attr,</span></span></span><br><span class="line"><span class="function"><span class="params">                    (<span class="keyword">void</span>*)(*start_rtn)(<span class="keyword">void</span>*),<span class="keyword">void</span> *arg)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>tidp:新创建的线程，其ID会被写入tidp指向的内存区域</li>
+<li>attr:设置线程属性，不需要的话设置为NULL</li>
+<li>start_rtn:新线程从<code>start_rtn</code>函数开始执行,start_rtn函数原型为</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">start_rtn</span><span class="params">(<span class="keyword">void</span>*)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>如果需要向start_rtn函数传递多个参数，可以将参数包装成一个结构体，通过<code>arg</code>向start_rtn传该结构体指针。<br>线程创建例程参见<code>1.c</code>。</p>
+<h2 id="3-线程终止"><a href="#3-线程终止" class="headerlink" title="3.线程终止"></a>3.线程终止</h2><p>如果任意线程调用了<code>exit</code>、<code>_Exit</code>或者<code>_exit</code>，那么整个进程就会终止。单个线程终止的方式有三种：</p>
+<ul>
+<li>从<code>start_rtn</code>函数中return.</li>
+<li>线程调用<code>pthread_exit</code>函数</li>
+<li>线程被同一进程的其他进程cancel。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">pthread_exit</span><span class="params">(<span class="keyword">void</span>* rval_ptr)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_join</span><span class="params">(<span class="keyword">pthread_t</span> thread, <span class="keyword">void</span>** rval_ptr)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>ravl_ptr</code>是一个void指针，进程中的其他线程可以通过<code>pthread_join</code>函数访问到这个指针。<br><code>pthread_join</code>将一直阻塞直到指定线程终止。</p>
+<p>线程终止例子参见<code>2.c, 3.c</code>。</p>
+<h2 id="4-线程清理"><a href="#4-线程清理" class="headerlink" title="4.线程清理"></a>4.线程清理</h2><p>线程可以在退出时执行需要调用的一些清理函数。一个线程可以注册多个清理函数，这些函数记录在栈中。执行顺序与注册顺序相反。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">pthread_cleanup_push</span><span class="params">(<span class="keyword">void</span> (*rtn)(<span class="keyword">void</span> *), <span class="keyword">void</span> *arg)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">pthread_clean_pop</span><span class="params">(<span class="keyword">int</span> execute)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>清理程序在以下三种情况会被执行</p>
+<ul>
+<li>调用<code>pthread_exit</code></li>
+<li>响应<code>cancel</code></li>
+<li>用非零参数调用<code>pthread_cleanup_pop</code>函数</li>
+</ul>
+<p>注意:从<code>start_rtn</code>函数<code>return</code>不会调用清理函数。例子参见<code>4.c</code></p>
+<h2 id="5-线程同步"><a href="#5-线程同步" class="headerlink" title="5. 线程同步"></a>5. 线程同步</h2><p>当多个线程可以读取和修改同一个变量时(这个变量可能是全局变量或者是在堆上创建的变量，局部变量属于线程私有，不存在同步问题)，需要对线程进行同步，确保在访问变量的存储内容时不会访问到无效的值。线程不同步造成的问题参见例子<code>6.c</code>。</p>
+<h2 id="6-互斥锁"><a href="#6-互斥锁" class="headerlink" title="6. 互斥锁"></a>6. 互斥锁</h2><p>可以使用<code>pthread</code>的互斥接口来保护数据，确保同一时间只有一个线程访问数据。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// mutex init</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_mutex_init</span><span class="params">(<span class="keyword">pthread_mutex_t</span> *<span class="keyword">restrict</span> mutex,<span class="keyword">const</span> <span class="keyword">pthread_mutexattr_t</span> *<span class="keyword">restrict</span> attr)</span></span>;</span><br><span class="line"><span class="comment">//mutex destory</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_destory</span><span class="params">(<span class="keyword">pthread_mutex_t</span> *mutex)</span></span>;</span><br><span class="line"><span class="comment">// lock mutex</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_mutex_lock</span><span class="params">(<span class="keyword">pthread_mutex_t</span> *mutex)</span></span>;</span><br><span class="line"><span class="comment">// unlock mutex</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">pthread_mutex_unlock</span><span class="params">(<span class="keyword">pthread_mutex_t</span> *mutex)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>使用mutex保护数据实例参见<code>5.c 7.c</code>。</p>
+<h2 id="7-死锁"><a href="#7-死锁" class="headerlink" title="7.死锁"></a>7.死锁</h2><p>死锁产生的原因有:</p>
+<ol>
+<li>线程对同一个互斥锁加锁两次，那么它自身就会陷入死锁状态。</li>
+<li>程序中使用了一个以上的互斥锁，某一个线程A一直占有第一个互斥锁，并且在试图锁住第二个互斥量时处于阻塞状态(也就是说第二个锁被另外一个线程B占有)，但是线程B也在试图锁住第一个互斥锁。两个线程都在相互请求另一个线程拥有的资源，那么两个线程都没有办法向前执行，产生死锁。</li>
+</ol>
+<p>下面这段代码就是造成死锁的典型例子(完整代码参见<code>10.c</code>)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">write</span><span class="params">(<span class="keyword">void</span> *temp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    pthread_mutex_lock(&amp;write_mutex);</span><br><span class="line">    sleep(<span class="number">1</span>);</span><br><span class="line">    pthread_mutex_lock(&amp;read_mutex);</span><br><span class="line">    ...</span><br><span class="line">    pthread_mutex_unlock(&amp;read_mutex);</span><br><span class="line">    pthread_mutex_unlock(&amp;write_mutex);</span><br><span class="line">    <span class="keyword">return</span> ((<span class="keyword">void</span>*)<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">read</span><span class="params">(<span class="keyword">void</span> *temp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    pthread_mutex_lock(&amp;read_mutex);</span><br><span class="line">    sleep(<span class="number">1</span>);</span><br><span class="line">    pthread_mutex_lock(&amp;write_mutex);</span><br><span class="line">    ...</span><br><span class="line">    pthread_mutex_unlock(&amp;write_mutex);</span><br><span class="line">    pthread_mutex_unlock(&amp;read_mutex);</span><br><span class="line">    <span class="keyword">return</span> ((<span class="keyword">void</span>*)<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>线程A执行写文件，首先锁住<code>write_mutex</code>，然后试图锁住<code>read_mutex</code>。但是<code>read_mutex</code>很有可能已经被线程b占用，于是两个线程各抱一个锁，互不撒手，产生死锁。</p>
+<h2 id="8-避免死锁的方法"><a href="#8-避免死锁的方法" class="headerlink" title="8. 避免死锁的方法"></a>8. 避免死锁的方法</h2><p>避免死锁有两种办法：<br><strong>方法1：</strong> 仔细控制互斥量的加锁顺序。保证每个线程都按照同样的顺序对互斥量加锁，就可以避免死锁问题。<br>比如在上面的例子当中，写线程首先抱住<code>write_mutex</code>，然后试图抱住<code>read_mutex</code>，如果读线程也已相同的顺序占有锁，那么在写线程抱住<code>write_mutex</code>的时候，由于读线程抢不到<code>write_mutex</code>,因此也不可能对<code>read_mutex</code>加锁。这样写线程就可以同时抱住两把锁，线程得以正常执行。反过来，读线程先抢到<code>write_mutex</code>也是一样的道理。我们把上面的例程改一下就可以正常运行了。参见<code>10.c</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">write</span><span class="params">(<span class="keyword">void</span> *temp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    pthread_mutex_lock(&amp;write_mutex);</span><br><span class="line">    sleep(<span class="number">1</span>);</span><br><span class="line">    pthread_mutex_lock(&amp;read_mutex);</span><br><span class="line">    ...</span><br><span class="line">    pthread_mutex_unlock(&amp;read_mutex);</span><br><span class="line">    pthread_mutex_unlock(&amp;write_mutex);</span><br><span class="line">    <span class="keyword">return</span> ((<span class="keyword">void</span>*)<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">read</span><span class="params">(<span class="keyword">void</span> *temp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    pthread_mutex_lock(&amp;write_mutex);</span><br><span class="line">    sleep(<span class="number">1</span>);</span><br><span class="line">    pthread_mutex_lock(&amp;read_mutex);</span><br><span class="line">    ...</span><br><span class="line">    pthread_mutex_unlock(&amp;write_mutex);</span><br><span class="line">    pthread_mutex_unlock(&amp;read_mutex);</span><br><span class="line">    <span class="keyword">return</span> ((<span class="keyword">void</span>*)<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有的时候，程序的结构比较复杂，如果用到了太多的锁和数据结构，那么对互斥量排序是很困难的，那么就需要采用另外的方法。</p>
+<p><strong>方法2：</strong> 使用<code>pthread</code>提供的<code>pthread_mutex_trylock</code>接口，如果已经占有某些锁的线程调用<code>pthread_mutex_trylock</code>接口返回成功，那么线程可以继续往前执行，如果不能获得锁，可以先释放自己占有的锁做好清理工作，待会儿再试试。</p>
+<h2 id="8-读写锁"><a href="#8-读写锁" class="headerlink" title="8.读写锁"></a>8.读写锁</h2><p>互斥锁可以解决线程不同步的问题，但是带来了性能损失。假设有10000个线程，其中9999个线程只需要读一个共享变量，仅有一个线程需要修改该变量。那么在某一个线程读的时候，其他的9998个线程也只能阻塞，等待互斥锁释放，这显然是不合理的。读写锁的引入就是为了解决这个问题，提高读的并发能力。读写锁存在三种情况：</p>
+<ul>
+<li><p>写线程拿到了读写锁， 那么此时锁处于写模式的加锁状态，其他线程只能阻塞等待。</p>
+</li>
+<li><p>只读线程拿到了读写锁，那么此时锁处于读模式的加锁状态。会出现两种情况：</p>
+<p>a) 在没有写线程阻塞的情况下，其他读线程可以继续加读模式的锁。</p>
+<p>b) 有写线程阻塞的情况下，读写锁通常会阻塞随后的读模式加锁。这样可以避免读模式锁长期占用，写线程被饿死。</p>
+</li>
+</ul>
+<p>读写锁的使用参见<code>9.c</code></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/zkangHUST/OperatingSystem/tree/master/thread">例程下载</a></p>
+<h2 id="9-参考资料"><a href="#9-参考资料" class="headerlink" title="9.参考资料"></a>9.参考资料</h2><p>[1].《unix环境高级编程》第11章</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/OS/" rel="tag"># OS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/06/18/C++/%E6%AD%A3%E7%A1%AE%E5%88%A0%E9%99%A4vector%E4%B8%AD%E7%9A%84%E5%85%83%E7%B4%A0/" rel="prev" title="如何正确删除vector中的元素">
+      <i class="fa fa-chevron-left"></i> 如何正确删除vector中的元素
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#0-%E8%BF%9B%E7%A8%8B%E5%92%8C%E7%BA%BF%E7%A8%8B%E5%AF%B9%E6%AF%94"><span class="nav-number">1.</span> <span class="nav-text">0.进程和线程对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E7%BA%BF%E7%A8%8BID"><span class="nav-number">2.</span> <span class="nav-text">1. 线程ID</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E7%BA%BF%E7%A8%8B%E5%88%9B%E5%BB%BA"><span class="nav-number">3.</span> <span class="nav-text">2.线程创建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E7%BA%BF%E7%A8%8B%E7%BB%88%E6%AD%A2"><span class="nav-number">4.</span> <span class="nav-text">3.线程终止</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E7%BA%BF%E7%A8%8B%E6%B8%85%E7%90%86"><span class="nav-number">5.</span> <span class="nav-text">4.线程清理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E7%BA%BF%E7%A8%8B%E5%90%8C%E6%AD%A5"><span class="nav-number">6.</span> <span class="nav-text">5. 线程同步</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E4%BA%92%E6%96%A5%E9%94%81"><span class="nav-number">7.</span> <span class="nav-text">6. 互斥锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E6%AD%BB%E9%94%81"><span class="nav-number">8.</span> <span class="nav-text">7.死锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E9%81%BF%E5%85%8D%E6%AD%BB%E9%94%81%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">9.</span> <span class="nav-text">8. 避免死锁的方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E8%AF%BB%E5%86%99%E9%94%81"><span class="nav-number">10.</span> <span class="nav-text">8.读写锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">11.</span> <span class="nav-text">9.参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Vincent Zheng"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Vincent Zheng</p>
+  <div class="site-description" itemprop="description">A bug machine made in HUST</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zkangHUST" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zkangHUST" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:vincent.zheng@zoom.us" title="E-Mail → mailto:vincent.zheng@zoom.us" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://yoursite.com/" title="http:&#x2F;&#x2F;yoursite.com" rel="noopener" target="_blank">Title</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vincent Zheng</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

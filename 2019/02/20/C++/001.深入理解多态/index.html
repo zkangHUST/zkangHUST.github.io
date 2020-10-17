@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="在之前发的一篇文章《虚函数表分析-C++多态的实现》中，已经分析过C++多态的实现原理。这篇文章来看一个具体的例子，这个例子来源于一道经典的C++面试题，看起来蛮简单，但是相当多的人都在这里翻车了。这篇文章希望能把这道题阐述清楚，给大家带来一些帮助。题目给了下面这样一段代码(代码我略有更改)，问程序的输出是什么，并解释输出结果。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解多态">
+<meta property="og:url" content="http://example.com/2019/02/20/C++/001.%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%A4%9A%E6%80%81/index.html">
+<meta property="og:site_name" content="Vincent&#39;s Blog">
+<meta property="og:description" content="在之前发的一篇文章《虚函数表分析-C++多态的实现》中，已经分析过C++多态的实现原理。这篇文章来看一个具体的例子，这个例子来源于一道经典的C++面试题，看起来蛮简单，但是相当多的人都在这里翻车了。这篇文章希望能把这道题阐述清楚，给大家带来一些帮助。题目给了下面这样一段代码(代码我略有更改)，问程序的输出是什么，并解释输出结果。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/BVCCVel91csYPGf86qEaHJvT7l14P0I75KRAZVv0k1JBicmRRPq8teKKadY5MDdkEeRWician2h1G51NjbUaHvZHQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/BVCCVel91csYPGf86qEaHJvT7l14P0I7tib4Yu37rZ4U4kLwrP6G2XOibyegnibnx5MXWjSicb2bbO6lQyL4xl5UEQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/BVCCVel91csYPGf86qEaHJvT7l14P0I7M2Ry1fZWRiaulluBrjpnbLokbhqwicXeSYYDSySxxupxxtJ88OgPUmkQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="article:published_time" content="2019-02-20T08:50:29.000Z">
+<meta property="article:modified_time" content="2020-10-17T07:23:17.419Z">
+<meta property="article:author" content="Vincent Zheng">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://mmbiz.qpic.cn/mmbiz_png/BVCCVel91csYPGf86qEaHJvT7l14P0I75KRAZVv0k1JBicmRRPq8teKKadY5MDdkEeRWician2h1G51NjbUaHvZHQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+
+<link rel="canonical" href="http://example.com/2019/02/20/C++/001.%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%A4%9A%E6%80%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>深入理解多态 | Vincent's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Vincent's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2019/02/20/C++/001.%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%A4%9A%E6%80%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Vincent Zheng">
+      <meta itemprop="description" content="A bug machine made in HUST">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vincent's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          深入理解多态
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-02-20 16:50:29" itemprop="dateCreated datePublished" datetime="2019-02-20T16:50:29+08:00">2019-02-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在之前发的一篇文章《虚函数表分析-C++多态的实现》中，已经分析过C++多态的实现原理。这篇文章来看一个具体的例子，这个例子来源于一道经典的C++面试题，看起来蛮简单，但是相当多的人都在这里翻车了。这篇文章希望能把这道题阐述清楚，给大家带来一些帮助。题目给了下面这样一段代码(代码我略有更改)，问程序的输出是什么，并解释输出结果。</p>
+<a id="more"></a> 
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">class A &#123;</span><br><span class="line">public:</span><br><span class="line">    int a;</span><br><span class="line">    virtual void x() &#123;</span><br><span class="line">        cout &lt;&lt; &quot;A::x()&quot; &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">    void y() &#123;</span><br><span class="line">        x();</span><br><span class="line">        cout &lt;&lt; &quot;A::y()&quot; &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">class B:public A &#123;</span><br><span class="line">public:</span><br><span class="line">    int b;</span><br><span class="line">    virtual void x() &#123;</span><br><span class="line">        cout &lt;&lt; &quot;B::x()&quot; &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">    virtual void y() &#123;</span><br><span class="line">        x();</span><br><span class="line">        cout &lt;&lt; &quot;B::y()&quot; &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    A* p &#x3D; new B;</span><br><span class="line">    p-&gt;y();</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>大家可以先自己想一想这段代码的执行结果是什么，再看后面的内容。</p>
+<p>这段代码的打印结果是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">B::x()</span><br><span class="line">A::y()</span><br></pre></td></tr></table></figure>
+
+<p>如何解释这个执行结果呢？我们先来分析一下A，B两个对象的内存布局是什么样子。A定义了一个int型的成员变量a，一个虚函数x()，一个普通成员函数y()。那么根据我们之前的分析可以知道，A对象的内存中应该包含一个虚函数指针和一个int类型的变量a。虚函数表指针指向一张虚函数表，虚函数表中保存着A::x()的函数地址。由于A::y()不是虚函数，因此y()的地址不会写入虚函数表，调用y()函数是编译器静态联编实现的。如果在32位系统上，那么一个A对象的实例应该占用8个字节(一个指针占用4字节，一个int变量占用4个字节)。其内存布局如图所示：<br><img src="https://mmbiz.qpic.cn/mmbiz_png/BVCCVel91csYPGf86qEaHJvT7l14P0I75KRAZVv0k1JBicmRRPq8teKKadY5MDdkEeRWician2h1G51NjbUaHvZHQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt="在这里插入图片描述"><br>B对象公有继承了A对象，那么B对象的内存中同样有一个虚函数表指针，一个int型变量a。B中的虚函数表的内容和A的虚函数表内容是一模一样。但是要注意由于B重写了A的x()函数，那么B的虚函数表中，本来存放A::x()函数地址的地方现在被替换为B::x()函数地址。同时因为B::y()函数也是一个虚函数，因此B::y()的函数地址被追加到B的虚函数表的末尾。B继承了A的a变量，同时自己也定义了一个int型的变量b。如果是在一个32位系统上，那么一个B对象的实例将占用12个字节(一个指针，两个int类型变量)。B的内存布局如下图所示：<br> <img src="https://mmbiz.qpic.cn/mmbiz_png/BVCCVel91csYPGf86qEaHJvT7l14P0I7tib4Yu37rZ4U4kLwrP6G2XOibyegnibnx5MXWjSicb2bbO6lQyL4xl5UEQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt="在这里插入图片描述"><br>现在回到代码上来，为什么执行p-&gt;y()打印出来的结果是调用了B的x函数，A的y函数呢？在main程序中，我们new了一个B对象，用一个A<em>指针来指向它。那么A</em>指针在B的内存当中可访问的范围如下图：<br> <img src="https://mmbiz.qpic.cn/mmbiz_png/BVCCVel91csYPGf86qEaHJvT7l14P0I7M2Ry1fZWRiaulluBrjpnbLokbhqwicXeSYYDSySxxupxxtJ88OgPUmkQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt="在这里插入图片描述"><br>因此通过p指针能访问的函数只有B::x()和A::y()，通过p能访问的成员变量只有a。调用p-&gt;y()函数的时候，由于p是一个A*指针，此时调用的是A的普通成员函数A::y()，这个函数调用是在编译器编译的时候已经确定的。我们知道当一个成员函数被调用时，编译程序会向它传递一个隐含的参数，这个参数是一个指向这个成员函数所在的对象的指针，这个指针的值会被赋值给this指针。</p>
+<p>在此例当中就是说执行p-&gt;y()时，会向y函数传递p指针赋值给this指针。在A::y()中调用x()函数，相当于调用this-&gt;x()，调用this-&gt;x()也就是调用p-&gt;x()。到这里就很清楚了，调用p-&gt;x()的时候，编译器从p的虚函数表中寻找x()函数的地址执行，显然找到的是B::x()的地址。因此，这里执行B的x()函数，打印出B::x()，随后接着执行A的y()函数，打印出A::y()。 </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/02/20/OS/%E5%8C%BA%E5%88%86%E5%90%8C%E6%AD%A5%E5%BC%82%E6%AD%A5%E9%98%BB%E5%A1%9E%E5%92%8C%E9%9D%9E%E9%98%BB%E5%A1%9E/" rel="prev" title="区分同步、异步、阻塞和非阻塞">
+      <i class="fa fa-chevron-left"></i> 区分同步、异步、阻塞和非阻塞
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/02/20/Leetcode/002/" rel="next" title="leetcode.63. Unique Paths II">
+      leetcode.63. Unique Paths II <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Vincent Zheng"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Vincent Zheng</p>
+  <div class="site-description" itemprop="description">A bug machine made in HUST</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zkangHUST" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zkangHUST" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:vincent.zheng@zoom.us" title="E-Mail → mailto:vincent.zheng@zoom.us" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://yoursite.com/" title="http:&#x2F;&#x2F;yoursite.com" rel="noopener" target="_blank">Title</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vincent Zheng</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

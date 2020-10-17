@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta property="og:type" content="article">
+<meta property="og:title" content="C++两种构造方法的效率对比">
+<meta property="og:url" content="http://example.com/2019/03/10/C++/%E4%B8%A4%E7%A7%8D%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E7%9A%84%E6%95%88%E7%8E%87%E5%AF%B9%E6%AF%94/index.html">
+<meta property="og:site_name" content="Vincent&#39;s Blog">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/img/1.png">
+<meta property="article:published_time" content="2019-03-10T08:50:29.000Z">
+<meta property="article:modified_time" content="2020-10-17T11:14:38.382Z">
+<meta property="article:author" content="Vincent Zheng">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/img/1.png">
+
+<link rel="canonical" href="http://example.com/2019/03/10/C++/%E4%B8%A4%E7%A7%8D%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E7%9A%84%E6%95%88%E7%8E%87%E5%AF%B9%E6%AF%94/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>C++两种构造方法的效率对比 | Vincent's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Vincent's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2019/03/10/C++/%E4%B8%A4%E7%A7%8D%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E7%9A%84%E6%95%88%E7%8E%87%E5%AF%B9%E6%AF%94/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Vincent Zheng">
+      <meta itemprop="description" content="A bug machine made in HUST">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vincent's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++两种构造方法的效率对比
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-03-10 16:50:29" itemprop="dateCreated datePublished" datetime="2019-03-10T16:50:29+08:00">2019-03-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-17 19:14:38" itemprop="dateModified" datetime="2020-10-17T19:14:38+08:00">2020-10-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="/img/1.png"></p>
+<a id="more"></a>
+<h2 id="0-为什么初始化列表效率高"><a href="#0-为什么初始化列表效率高" class="headerlink" title="0. 为什么初始化列表效率高?"></a>0. 为什么初始化列表效率高?</h2><p>C++中类的构造函数写法有两种，一种是使用初始化列表，一种是在代码块中赋值。很多书中(包括C++ Primer、C++ Primer Plus等等)都会提到应该尽量使用初始化列表而不是在代码块中赋值，因为使用初始化列表通常比在代码块中赋值效率要高。但是这个结论是怎么来的？如何验证呢？今天我们来设计一个小例子对比一下两者之间的区别。</p>
+<h2 id="1-定义一个Man类"><a href="#1-定义一个Man类" class="headerlink" title="1. 定义一个Man类"></a>1. 定义一个Man类</h2><p>首先，我们定义一个Man类，数据成员包括姓名和年龄。设计很简单，直接放代码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  Man()&#123;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;call Man::Man()&quot;</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  Man(<span class="built_in">string</span> n, <span class="keyword">int</span> a):name(n),age(a) &#123;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;call Man::Man(string, int)&quot;</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  Man(<span class="keyword">const</span> Man&amp; a) &#123;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;call Man::Man(const Man&amp;)&quot;</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  Man&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> Man&amp; a) &#123;</span><br><span class="line">    name = a.name;</span><br><span class="line">    age = a.age;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;call Man::operator=(const Man&amp; a)&quot;</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">  &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="built_in">string</span>  name;</span><br><span class="line">  <span class="keyword">int</span>   age;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在这个类里面，我们写了三个构造函数：默认构造函数，带参的构造函数、拷贝构造函数，并且重载了赋值运算符。同时在每个函数当中添加了打印语句，指示当前执行的函数名称。</p>
+<h2 id="2-代码块构造"><a href="#2-代码块构造" class="headerlink" title="2. 代码块构造"></a>2. 代码块构造</h2><p>我们再来定义一个ChineseMan类。类中包含一个Man对象和一个名为ID的string对象，用来保存身份证号码。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ChineseMan</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  ChineseMan(Man a, <span class="built_in">string</span> i) &#123;</span><br><span class="line">    man = a;</span><br><span class="line">    id = i;</span><br><span class="line">  &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="built_in">string</span>  id;</span><br><span class="line">  Man   man;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在类中我们我们写了一个带参数的构造函数，用代码块赋值的方式来初始化。然后我们再来写一个测试程序：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="function">Man <span class="title">vincent</span><span class="params">(<span class="string">&quot;vincent&quot;</span>, <span class="number">26</span>)</span></span>;</span><br><span class="line">  <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;-----------&quot;</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">  <span class="function">ChineseMan <span class="title">vincent_CN</span><span class="params">(vincent, <span class="string">&quot;001&quot;</span>)</span></span>;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>测试程序中创建了一个Man对象和一个ChineseMan对象，ChineseMan对象用Man对象来初始化。看一下程序执行的结果。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.exe</span><br><span class="line"><span class="function">call <span class="title">Man::Man</span><span class="params">(<span class="built_in">string</span>, <span class="keyword">int</span>)</span></span></span><br><span class="line">-----------</span><br><span class="line"><span class="function">call <span class="title">Man::Man</span><span class="params">(<span class="keyword">const</span> Man&amp;)</span></span></span><br><span class="line"><span class="function">call <span class="title">Man::Man</span><span class="params">()</span></span></span><br><span class="line"><span class="function">call Man::<span class="keyword">operator</span></span>=(<span class="keyword">const</span> Man&amp; a)</span><br></pre></td></tr></table></figure>
+<p>从执行结果来看：在main函数中首先调用了Man的带参构造函数，创建了对象vincent，这个很好理解。下面来看看创建vincent_CN的过程中，稍微有点绕。创建vincent_CN的过程可以分为三步：</p>
+<ol>
+<li>首先调用了Man的拷贝构造函数，因为需要把实参vincent拷贝赋值给形参a；</li>
+<li>然后又调用了Man的默认构造函数，这是因为需要创建vincent_CN对象的man成员。</li>
+<li>第三步调用赋值运算符函数，把对象a赋值给对象man。至此完成vincent_CN的构造过程。</li>
+</ol>
+<p>可以看出，用代码块初始化一个参数含对象的对象，经历了三步。如果传入的参数是引用或者指针的话，第一步可以省掉。我们再看一下用初始化列表构造对象是什么样子。</p>
+<h2 id="3-初始化列表构造"><a href="#3-初始化列表构造" class="headerlink" title="3. 初始化列表构造"></a>3. 初始化列表构造</h2><p>下面我们把ChineseMan类的构造函数修改一下，改为初始化列表：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ChineseMan</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  ChineseMan(Man a, <span class="built_in">string</span> i):man(a), id(i) &#123;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="built_in">string</span>  id;</span><br><span class="line">  Man   man;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>测试程序不变，再来看一下运行结果：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.exe</span><br><span class="line"><span class="function">call <span class="title">Man::Man</span><span class="params">(<span class="built_in">string</span>, <span class="keyword">int</span>)</span></span></span><br><span class="line">-----------</span><br><span class="line"><span class="function">call <span class="title">Man::Man</span><span class="params">(<span class="keyword">const</span> Man&amp;)</span></span></span><br><span class="line"><span class="function">call <span class="title">Man::Man</span><span class="params">(<span class="keyword">const</span> Man&amp;)</span></span></span><br></pre></td></tr></table></figure>
+<p>程序执行结果的第一行是创建vincent对象，创建vincent_CN的过程可以分为两步：</p>
+<ol>
+<li>第一步调用拷贝构造函数，是因为传递参数需要把实参vincent传递给形参a。</li>
+<li>第二步再次调用拷贝构造函数，是用形参a来构造数据成员man。</li>
+</ol>
+<p>因此用初始化列表构造对象，调用了两次拷贝构造函数。</p>
+<h2 id="4-总结"><a href="#4-总结" class="headerlink" title="4. 总结"></a>4. 总结</h2><p>对比两种方法的执行结果，可以看出来：用初始化列表构造对象，在实参传给形参之后，直接就调用拷贝构造函数用形参来构造数据成员了，不需要经历先构造再赋值的操作。因此效率上确实要比代码块初始化高一些。在这样一个短短的程序上看不出来什么明显的效果，但是如果一个类的数据成员里面包含了大量的其他类对象，那么累积起来的效果是非常客观的，因此在平常的开发过程中我们应该养成尽量使用列表初始化来构造对象的习惯。</p>
+<p>The End</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/03/09/C++/%E8%87%AA%E5%B7%B1%E5%8A%A8%E6%89%8B%E5%AE%9E%E7%8E%B0vector/" rel="prev" title="自己动手实现vector">
+      <i class="fa fa-chevron-left"></i> 自己动手实现vector
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/03/13/DataStructure/%E8%BF%94%E5%9B%9E%E5%85%88%E5%BA%8F%E9%81%8D%E5%8E%86%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E4%B8%AA%E8%8A%82%E7%82%B9/" rel="next" title="返回先序遍历的最后一个节点">
+      返回先序遍历的最后一个节点 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#0-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%88%9D%E5%A7%8B%E5%8C%96%E5%88%97%E8%A1%A8%E6%95%88%E7%8E%87%E9%AB%98"><span class="nav-number">1.</span> <span class="nav-text">0. 为什么初始化列表效率高?</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%AE%9A%E4%B9%89%E4%B8%80%E4%B8%AAMan%E7%B1%BB"><span class="nav-number">2.</span> <span class="nav-text">1. 定义一个Man类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%BB%A3%E7%A0%81%E5%9D%97%E6%9E%84%E9%80%A0"><span class="nav-number">3.</span> <span class="nav-text">2. 代码块构造</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%88%9D%E5%A7%8B%E5%8C%96%E5%88%97%E8%A1%A8%E6%9E%84%E9%80%A0"><span class="nav-number">4.</span> <span class="nav-text">3. 初始化列表构造</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">4. 总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Vincent Zheng"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Vincent Zheng</p>
+  <div class="site-description" itemprop="description">A bug machine made in HUST</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zkangHUST" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zkangHUST" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:vincent.zheng@zoom.us" title="E-Mail → mailto:vincent.zheng@zoom.us" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://yoursite.com/" title="http:&#x2F;&#x2F;yoursite.com" rel="noopener" target="_blank">Title</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vincent Zheng</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

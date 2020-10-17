@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="string类是C++当中用的非常频繁的一个类，它提供了很多处理字符串的函数，让字符串的使用变得像int、float等built-in类型一样简单。string类的实现包含了大量c++语言的知识，其中有很多值得讨论的问题。自己动手实现一个string类是学习c++语言的好方法，可以检验自己一下C++基础知识掌握的如何。下面我们来尝试动手实现一个字符串类。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何实现一个string类(1)">
+<meta property="og:url" content="http://example.com/2019/02/28/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAstring%E7%B1%BB/index.html">
+<meta property="og:site_name" content="Vincent&#39;s Blog">
+<meta property="og:description" content="string类是C++当中用的非常频繁的一个类，它提供了很多处理字符串的函数，让字符串的使用变得像int、float等built-in类型一样简单。string类的实现包含了大量c++语言的知识，其中有很多值得讨论的问题。自己动手实现一个string类是学习c++语言的好方法，可以检验自己一下C++基础知识掌握的如何。下面我们来尝试动手实现一个字符串类。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-02-28T09:29:02.000Z">
+<meta property="article:modified_time" content="2020-10-17T07:23:17.420Z">
+<meta property="article:author" content="Vincent Zheng">
+<meta property="article:tag" content="C++">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2019/02/28/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAstring%E7%B1%BB/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>如何实现一个string类(1) | Vincent's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Vincent's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2019/02/28/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAstring%E7%B1%BB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Vincent Zheng">
+      <meta itemprop="description" content="A bug machine made in HUST">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vincent's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何实现一个string类(1)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-02-28 17:29:02" itemprop="dateCreated datePublished" datetime="2019-02-28T17:29:02+08:00">2019-02-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>string类是C++当中用的非常频繁的一个类，它提供了很多处理字符串的函数，让字符串的使用变得像int、float等built-in类型一样简单。string类的实现包含了大量c++语言的知识，其中有很多值得讨论的问题。自己动手实现一个string类是学习c++语言的好方法，可以检验自己一下C++基础知识掌握的如何。下面我们来尝试动手实现一个字符串类。</p>
+<a id="more"></a>
+<h2 id="1-定义成员变量"><a href="#1-定义成员变量" class="headerlink" title="1.定义成员变量"></a>1.定义成员变量</h2><p>我们的字符串类需要处理变长的字符串，需要根据字符串的长度动态的调整内存空间。因此我们需要一个指针，指向存储字符串的内存位置。我们还需要一个变量来记录字符串的长度，同时我们还要一个变量记录所申请的内存空间大小。另外，我们的字符串也不能无限长，我们需要定义一个最大的长度。因此，我们的string类中需要四个数据成员。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">class myString &#123;</span><br><span class="line">private:</span><br><span class="line">    char        *p;     &#x2F;&#x2F; 指向存储字符串的内存空间</span><br><span class="line">    int         len;    &#x2F;&#x2F; 保存字符串长度</span><br><span class="line">    int         size;   &#x2F;&#x2F; 保存申请的内存空间的长度</span><br><span class="line">    const int   max_size &#x3D; 65536;   &#x2F;&#x2F;最大长度</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于最大长度对于每个myString类是固定的，因此我们把它声明为const，初始化为65536，也就是说我们的string类能保存的字符串最大长度为65536。</p>
+<h2 id="2-构造函数"><a href="#2-构造函数" class="headerlink" title="2.构造函数"></a>2.构造函数</h2><p>成员变量定义好后，我们需要确定如何构造我们的myString类。C++98为string类提供了7种构造函数，c++11又新增了两种，实在是太多了！我们不管那么多，先实现两个简单的吧！</p>
+<h3 id="2-1-默认构造函数"><a href="#2-1-默认构造函数" class="headerlink" title="2.1.默认构造函数"></a>2.1.默认构造函数</h3><p>首先来实现一个默认构造函数。既然是默认构造函数，那么就设置一下各个成员变量的值，然后存一个空字符串吧。 在默认构造函数，虽然存的是一个空字符串，但是我们也给它分配一点空间，主要是为了方便以后拓展。默认构造函数很简单，实现如下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">myString::myString()</span><br><span class="line">&#123;   </span><br><span class="line">    size &#x3D; 1;              </span><br><span class="line">    p &#x3D; new char[size + 1];</span><br><span class="line">    p[0] &#x3D; &#39;\0&#39;;</span><br><span class="line">    len &#x3D; 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-带参数的构造函数"><a href="#2-2-带参数的构造函数" class="headerlink" title="2.2 带参数的构造函数"></a>2.2 带参数的构造函数</h3><p>通常我们希望在构造string类的时候就给它一个初始值。那么我们需要实现一个带参数的构造函数，传入一个字符串指针，通过一个c风格的字符串来构造一个myString对象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">myString::myString(const char *s)</span><br><span class="line">&#123;</span><br><span class="line">    size &#x3D; 1;</span><br><span class="line">    len &#x3D; strlen(s);</span><br><span class="line">    if (len &gt; max_size) &#123;</span><br><span class="line">        len &#x3D; max_size;</span><br><span class="line">    &#125;</span><br><span class="line">    while (size &lt; len) &#123;</span><br><span class="line">        size *&#x3D; 2;</span><br><span class="line">    &#125;</span><br><span class="line">    p &#x3D; new char[size + 1];</span><br><span class="line">    strncpy(p, s, size);</span><br><span class="line">    p[size] &#x3D; &#39;\0&#39;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为在构造函数中，不需要修改传入的字符串，因此我们把输入的参数设置为const。如果传入的字符串长度超过了max_size，那么我们只把字符串中前65536个字符写入myString。然后要做的就是申请空间了，你可能会想申请空间当然是根据字符串的长度来了，只要不超过最大长度，字符串有多长就申请多少个字节的内存。</p>
+<p>但是想一想这样做有没有什么坏处呢？如果以后我们想拓展字符串怎么办？是不是又要重新申请空间呢？要知道申请空间可是相当耗时间的，这个办法不好。那么我们是不是可以直接申请max_size个字节的内存呢？当然可以的，但是对于每一个myString对象我们都申请max_size个字节的内存，实在是太浪费了！要知道我们平常处理的大多数字符串都是很短的。</p>
+<p>两种办法都不行，那怎么办？在这里我们采取跟vector申请内存一样的策略，如果当前内存不够用，那么就申请一块大小为当前空间两倍的内存块来存储。上面代码中的while循环就是为了确定要申请的内存空间的大小。假设我们传入构造函数的字符串是”hello,world”，一共11个字符(结束符另算)，那么我们申请16个字节来存储它(结束符也另算)。申请好内存后(实际上这里应该检查申请内存是否成功，p==NULL？，但是这里忽略这个问题)，我们把传入的字符串拷贝到申请好的内存。注意，这里用strncpy，不要用strcpy，同时记得把最后一个字节的值置为0(如果没有置为0会造成什么后果，自己试验一下)。</p>
+<h2 id="3-重载-lt-lt-运算符"><a href="#3-重载-lt-lt-运算符" class="headerlink" title="3. 重载&lt;&lt;运算符"></a>3. 重载&lt;&lt;运算符</h2><p>现在我迫不及待的想知道myString的构造函数是否可以正常工作。怎么验证呢？我们当然可以写一个print函数，在函数中把myString的值打印出来。但是这种办法实在是太不CPP了，我们来采用一个更专业的写法，那就是通过重载&lt;&lt;来实现。通过重载&lt;&lt;输出myString可以像输出int、float等类型一样方便。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; myString.h</span><br><span class="line">friend ostream&amp; operator&lt;&lt; (ostream&amp; out, const myString&amp; s);</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; myString.cpp</span><br><span class="line">ostream&amp; operator&lt;&lt; (ostream&amp; out, const myString&amp; s)</span><br><span class="line">&#123;</span><br><span class="line">    out &lt;&lt; s.p ;</span><br><span class="line">    return out;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们在头文件中声明一个重载&lt;&lt;操作符函数，为了直接在函数中操作myString对象的成员变量，我们把这个函数声明为友元函数。这个函数的目的是为了输出字符串的值，当然不会对myString有什么更改，因此把传入的myString引用设置为const。函数的实现我们放在cpp文件中，代码就两行，so easy！鉴于这个函数如此简单，我们也可以把它声明为inline函数，自己试一下。现在我们可以用cout来打印myString对象了，就像操作int、float等基本类型一样简单，试一下看看。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">#include&lt;iostream&gt;</span><br><span class="line">using namespace std;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    myString a(&quot;hello,world&quot;);</span><br><span class="line">    cout &lt;&lt; a &lt;&lt; endl;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的的执行结果是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ .&#x2F;a.exe</span><br><span class="line">hello,world</span><br></pre></td></tr></table></figure>
+<p>Nice work! 看来我们的构造函数可以正常工作，我们重载的&lt;&lt;函数貌似也没啥问题，哈哈！<br>嗯…………不要高兴的太早！完成构造函数后，我们就要考虑如何析构 。向操作系统老大申请内存，大部分时候老大总是慷慨的借给我们，但是我们也要记得及时归还，否则以后老大不肯借了怎么办？现在是时候考虑一下析构函数的问题了。</p>
+<h2 id="4-析构函数"><a href="#4-析构函数" class="headerlink" title="4.析构函数"></a>4.析构函数</h2><p>大家都知道，如果没有显式地定义析构函数，编译器会自动为我们提供一个析构函数。真是个贴心的大暖男！可惜的是这个大暖男有点笨啊，他只会傻傻的把成员变量挨个释放掉，对于成员变量指向的动态申请的内存块，他就装作没看见一样，任由这个内存块变成一个幽灵游荡在内存之中。这就会带来一个另操作系统暴怒，另所有程序员心惊胆战的严重问题–内存泄漏！所以我们必须为myString提供一个析构函数，在析构函数中释放在构造函数中申请的内存。在myString类的析构函数应该这样写：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">myString::~myString()</span><br><span class="line">&#123;</span><br><span class="line">    delete[] p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看看这个函数，就这么短短一行，比重载的&lt;&lt;函数还短。但是你不写试试，内存泄漏给你看哦~真是人狠话不多的典型！</p>
+<h2 id="5-拷贝构造函数"><a href="#5-拷贝构造函数" class="headerlink" title="5. 拷贝构造函数"></a>5. 拷贝构造函数</h2><p>在我们使用string的时候，经常需要用一个构造好的string来构造一个新的string，这个时候就需要用到拷贝构造函数。跟析构函数一样，如果没有显式定义拷贝构造函数，编译器会为我们提供一个默认的拷贝构造函数。大暖男再次登场，可惜的是同样不靠谱。默认的拷贝构造函数只会傻傻的把传入对象的成员变量挨个赋值给新构造对象的成员变量。对于我们的myString类，默认的拷贝构造函数做的事情就相当于下面这个函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">myString::myString(const myString&amp; s) </span><br><span class="line">&#123;</span><br><span class="line">    p &#x3D; s.p;</span><br><span class="line">    len &#x3D; s.len;</span><br><span class="line">    size &#x3D; p.size;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>默认拷贝构造函数会造成什么问题呢？对于不含指针的类来说，默认构造函数可以正常工作，没啥问题。暖男可以帮我们少写几行代码。但是对于含有指针的类来说，默认拷贝构造函数造成的麻烦大了去了。</p>
+<p>假设存在myString对象a，用a来构造对象b，此时会调用默认拷贝构造函数。b构造完成后，b的p指针和a的p指针值相等，也就是说两个指针指向同一块内存。那么问题来了，当我们通过a的p指针修改内存内容时，b的p指针指向的内存块也会跟着改变！这显然是不符合设计需求的。</p>
+<p>如果你以为这就完了，那就大错特错，更麻烦的问题还在后面呢！b跟着a修改虽然不符合我们的需求，但是好歹不会造成程序崩溃。那如果我们构造b之后把a对象给析构掉了会怎么样呢？</p>
+<p>a对象析构之后，a的p指针指向的内存块(同时也是b的p指针指向的内存块)也随之被释放掉，此时b的p指针就变成了一个野指针。当b的生命周期结束后，b的析构函数会尝试释放b的p指针指向的内存块，然而这块内存实际上已经在a被析构的时候被释放掉了，因此造成内存二次析构的问题，产生意想不到的后果。</p>
+<p>既然默认的拷贝构造函数不靠谱，那我们只好自己实现一个。实现拷贝构造函数的关键是要避免复制构造前后两个对象的指针指向同一片内存。原有对象的内容当然不能乱改，只能重新申请一块内存，用新对象的指针指向这块内存了。因为不能改动原有的对象，因此把传入的参数设置为const。拷贝构造函数实现如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">myString::myString(const myString&amp; s) </span><br><span class="line">&#123;</span><br><span class="line">    size &#x3D; s.size;</span><br><span class="line">    p &#x3D; new char[size + 1];</span><br><span class="line">    strcpy(p, s.p);</span><br><span class="line">    len &#x3D; s.len;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="6-总结"><a href="#6-总结" class="headerlink" title="6. 总结"></a>6. 总结</h2><p>在这一篇文章中，我们实现了默认构造函数、带参数的构造函数、拷贝构造函数、析构函数和&lt;&lt;符重载函数。在构造函数当中，我们讨论了内存申请策略的问题；在析构函数中我们讨论了内存释放的问题；在拷贝构造函数中，还讨论了构造前后两个对象的指针成员指向同一片内存(浅拷贝)带来的问题和解决办法(深拷贝)，这也是后面讨论赋值运算符重载的基础。现在myString类的基本框架已经有了，下一篇文章我们继续实现myString的各种功能。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/02/27/HumanResourceMachine/21-%E9%9B%B6%E7%BB%93%E5%B0%BE%E5%AD%97%E7%AC%A6%E4%B8%B2/" rel="prev" title="21.零结尾字符串">
+      <i class="fa fa-chevron-left"></i> 21.零结尾字符串
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/03/01/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAstring%E7%B1%BB2/" rel="next" title="如何实现一个string类(2)">
+      如何实现一个string类(2) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%AE%9A%E4%B9%89%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F"><span class="nav-number">1.</span> <span class="nav-text">1.定义成员变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="nav-number">2.</span> <span class="nav-text">2.构造函数</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E9%BB%98%E8%AE%A4%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="nav-number">2.1.</span> <span class="nav-text">2.1.默认构造函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E5%B8%A6%E5%8F%82%E6%95%B0%E7%9A%84%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 带参数的构造函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E9%87%8D%E8%BD%BD-lt-lt-%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="nav-number">3.</span> <span class="nav-text">3. 重载&lt;&lt;运算符</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0"><span class="nav-number">4.</span> <span class="nav-text">4.析构函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E6%8B%B7%E8%B4%9D%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="nav-number">5.</span> <span class="nav-text">5. 拷贝构造函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">6. 总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Vincent Zheng"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Vincent Zheng</p>
+  <div class="site-description" itemprop="description">A bug machine made in HUST</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zkangHUST" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zkangHUST" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:vincent.zheng@zoom.us" title="E-Mail → mailto:vincent.zheng@zoom.us" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://yoursite.com/" title="http:&#x2F;&#x2F;yoursite.com" rel="noopener" target="_blank">Title</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vincent Zheng</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

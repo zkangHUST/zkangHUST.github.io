@@ -20,30 +20,32 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="A bug machine made in HUST">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Vincent&#39;s Blog">
-<meta property="og:url" content="http://example.com/index.html">
+  <meta name="description" content="intro to smart pointer and move semantics(翻译改写自https:&#x2F;&#x2F;www.learncpp.com&#x2F;cpp-tutorial&#x2F;15-1-intro-to-smart-pointers-move-semantics&#x2F;) 1. 裸指针导致的内存泄漏问题考虑下面这个函数，在这个函数中我们动态申请了一片内存。 123456void someFunction()&amp;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="smart pointer">
+<meta property="og:url" content="http://example.com/2020/10/18/intro%20to%20smart%20pointer%20and%20move%20semantics/index.html">
 <meta property="og:site_name" content="Vincent&#39;s Blog">
-<meta property="og:description" content="A bug machine made in HUST">
+<meta property="og:description" content="intro to smart pointer and move semantics(翻译改写自https:&#x2F;&#x2F;www.learncpp.com&#x2F;cpp-tutorial&#x2F;15-1-intro-to-smart-pointers-move-semantics&#x2F;) 1. 裸指针导致的内存泄漏问题考虑下面这个函数，在这个函数中我们动态申请了一片内存。 123456void someFunction()&amp;">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-10-18T09:52:30.000Z">
+<meta property="article:modified_time" content="2020-10-19T02:55:41.620Z">
 <meta property="article:author" content="Vincent Zheng">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://example.com/">
+<link rel="canonical" href="http://example.com/2020/10/18/intro%20to%20smart%20pointer%20and%20move%20semantics/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
 
-  <title>Vincent's Blog</title>
+  <title>smart pointer | Vincent's Blog</title>
   
 
 
@@ -156,9 +158,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
@@ -174,10 +177,9 @@
       <meta itemprop="name" content="Vincent's Blog">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/10/18/intro%20to%20smart%20pointer%20and%20move%20semantics/" class="post-title-link" itemprop="url">smart pointer</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          smart pointer
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -207,7 +209,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="intro-to-smart-pointer-and-move-semantics"><a href="#intro-to-smart-pointer-and-move-semantics" class="headerlink" title="intro to smart pointer and move semantics"></a>intro to smart pointer and move semantics</h1><p>(翻译改写自<a target="_blank" rel="noopener" href="https://www.learncpp.com/cpp-tutorial/15-1-intro-to-smart-pointers-move-semantics/">https://www.learncpp.com/cpp-tutorial/15-1-intro-to-smart-pointers-move-semantics/</a>)</p>
+        <h1 id="intro-to-smart-pointer-and-move-semantics"><a href="#intro-to-smart-pointer-and-move-semantics" class="headerlink" title="intro to smart pointer and move semantics"></a>intro to smart pointer and move semantics</h1><p>(翻译改写自<a target="_blank" rel="noopener" href="https://www.learncpp.com/cpp-tutorial/15-1-intro-to-smart-pointers-move-semantics/">https://www.learncpp.com/cpp-tutorial/15-1-intro-to-smart-pointers-move-semantics/</a>)</p>
 <h2 id="1-裸指针导致的内存泄漏问题"><a href="#1-裸指针导致的内存泄漏问题" class="headerlink" title="1. 裸指针导致的内存泄漏问题"></a>1. 裸指针导致的内存泄漏问题</h2><p>考虑下面这个函数，在这个函数中我们动态申请了一片内存。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">someFunction</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Resource *ptr = <span class="keyword">new</span> Resource; <span class="comment">// Resource is a struct or class</span></span><br><span class="line">    <span class="comment">// do stuff with ptr here</span></span><br><span class="line">    <span class="keyword">delete</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这段代码看起来非常直白，但是存在一个问题：我们常常会忘了释放内存。即使我们始终记得释放内存，但是还存在一些case导致内存没有正确释放。<br>case1: 函数提前返回</p>
@@ -256,692 +258,31 @@
 <h2 id="6-更进一步"><a href="#6-更进一步" class="headerlink" title="6. 更进一步"></a>6. 更进一步</h2><p>auto_ptr设计的核心问题在于C++11之前，C++语言没有move semantics。重载拷贝构造函数和赋值运算符来实现移动语义会导致很多奇怪的case和bug。比如res2 = res1这行代码，你不知道res1是否会改变。<br>因为这些原因，C++11正式定义了move semantics， 并提供了三种智能指针，std::unique_ptr, std::weak_ptr, std::shared_ptr。这三种智能指针，后续继续讨论。</p>
 <h2 id="7-参考资料"><a href="#7-参考资料" class="headerlink" title="7. 参考资料"></a>7. 参考资料</h2><p>[1]. <a target="_blank" rel="noopener" href="https://www.learncpp.com/cpp-tutorial/15-1-intro-to-smart-pointers-move-semantics/">https://www.learncpp.com/cpp-tutorial/15-1-intro-to-smart-pointers-move-semantics/</a></p>
 
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/06/29/OS/%E7%BA%BF%E7%A8%8B%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/06/29/OS/%E7%BA%BF%E7%A8%8B%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">线程总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-06-29 12:20:56" itemprop="dateCreated datePublished" datetime="2019-06-29T12:20:56+08:00">2019-06-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 19:53:49" itemprop="dateModified" datetime="2020-10-17T19:53:49+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="0-进程和线程对比"><a href="#0-进程和线程对比" class="headerlink" title="0.进程和线程对比"></a>0.进程和线程对比</h2><ul>
-<li>进程有自己的虚拟地址空间，线程没有</li>
-<li>进程包含的内容有：地址空间、全局变量、打开的文件、子进程、定时器、信号和信号处理程序等</li>
-<li>线程包含的东西有：程序计数器、寄存器、栈和状态(条件码)。每个线程都有自己的栈，但是堆是共享的。</li>
-<li>多个线程运行在单一进程的上下文中，共享进程虚拟地址空间的所有内容，包括代码，数据，堆，共享库和打开的文件等。</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/06/29/OS/%E7%BA%BF%E7%A8%8B%E6%80%BB%E7%BB%93/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/06/18/C++/%E6%AD%A3%E7%A1%AE%E5%88%A0%E9%99%A4vector%E4%B8%AD%E7%9A%84%E5%85%83%E7%B4%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/06/18/C++/%E6%AD%A3%E7%A1%AE%E5%88%A0%E9%99%A4vector%E4%B8%AD%E7%9A%84%E5%85%83%E7%B4%A0/" class="post-title-link" itemprop="url">如何正确删除vector中的元素</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-06-18 21:43:44" itemprop="dateCreated datePublished" datetime="2019-06-18T21:43:44+08:00">2019-06-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="0-删除vector中的指定元素"><a href="#0-删除vector中的指定元素" class="headerlink" title="0. 删除vector中的指定元素"></a>0. 删除vector中的指定元素</h2><p>今天来探讨C++中的一个基础问题。如何正确地删除<code>vector</code>中符合条件的某元素。比如，有一个<code>vector&lt;int&gt; nums = &#123;1, 2, 2, 2, 2, 3, 5&#125;</code>，要求删除<code>nums</code>中所有值为2的元素。C++初学者可能很快就写出代码:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;::iterator it = nums.begin(); it != nums.end(); it++) &#123;</span><br><span class="line">    <span class="keyword">if</span> (*it == <span class="number">2</span>) &#123;</span><br><span class="line">        nums.erase(it);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/06/18/C++/%E6%AD%A3%E7%A1%AE%E5%88%A0%E9%99%A4vector%E4%B8%AD%E7%9A%84%E5%85%83%E7%B4%A0/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/06/29/OS/%E7%BA%BF%E7%A8%8B%E6%80%BB%E7%BB%93/" rel="prev" title="线程总结">
+      <i class="fa fa-chevron-left"></i> 线程总结
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
   
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/05/27/C++/GDB%E8%B0%83%E8%AF%95%E6%8A%80%E5%B7%A7-%E6%89%93%E5%8D%B0vector%E7%9A%84%E5%85%83%E7%B4%A0%E5%80%BC/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/05/27/C++/GDB%E8%B0%83%E8%AF%95%E6%8A%80%E5%B7%A7-%E6%89%93%E5%8D%B0vector%E7%9A%84%E5%85%83%E7%B4%A0%E5%80%BC/" class="post-title-link" itemprop="url">GDB调试技巧-打印vector的元素值</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-05-27 16:50:29" itemprop="dateCreated datePublished" datetime="2019-05-27T16:50:29+08:00">2019-05-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>平常在使用GDB调试程序的时候，我们经常需要查看一个STL容器里面存储的元素的值是多少。但是用GDB的p命令打印容器，得到的却是一堆乱七八糟的东西。比如有一个<code>vector&lt;int&gt; nums = &#123;1,2,3&#125;</code>，当我们使用<code>p nums</code>命令时，我们得到的结果是:</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/05/27/C++/GDB%E8%B0%83%E8%AF%95%E6%8A%80%E5%B7%A7-%E6%89%93%E5%8D%B0vector%E7%9A%84%E5%85%83%E7%B4%A0%E5%80%BC/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/05/08/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAmin-stack/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/05/08/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAmin-stack/" class="post-title-link" itemprop="url">如何实现一个min stack</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-05-08 22:00:07" itemprop="dateCreated datePublished" datetime="2019-05-08T22:00:07+08:00">2019-05-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Q: 如何设计一个特殊的栈,支持min()操作,返回栈中的最小元素.</p>
-<p>这个问题来源于去年面试遇到的一道题目,面试官给了20分钟时间让设计这样一个栈.当时时间有限,虽然写出来了一个版本,但是那个版本还存在很多的问题,比如不够通用,只能支持<code>int</code>类型数据;同时,效率也不高, 存在大量的数据拷贝.</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/05/08/C++/%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAmin-stack/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/03/15/C++/%E6%8C%87%E9%92%88%E5%92%8C%E5%BC%95%E7%94%A8-md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/03/15/C++/%E6%8C%87%E9%92%88%E5%92%8C%E5%BC%95%E7%94%A8-md/" class="post-title-link" itemprop="url">指针和引用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-03-15 11:03:33" itemprop="dateCreated datePublished" datetime="2019-03-15T11:03:33+08:00">2019-03-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>C++中引入的引用类型，给我们带来了很大的方便。通过向函数传递引用，我们既可以享受像传递指针一样直接修改变量值的优点，又避免了空指针和野指针造成的问题。在日常开发中我们应该尽量使用引用，避免使用指针。但是引用到底是什么，看起来好像引用跟指针有着千丝万缕的联系，同时两者又有很大的差别，那么引用跟指针到底是什么关系呢？教材上通常会说，引用就是变量的别名，但是光看这句话可能还是不太明白引用的本质。其实按照我的理解引用可以看做一种特殊的指针，在这里做一个总结。</p>
-<h1 id="0-指针和引用的区别"><a href="#0-指针和引用的区别" class="headerlink" title="0.指针和引用的区别"></a>0.指针和引用的区别</h1><p>指针和引用的区别主要有以下几点：</p>
-<ol>
-<li>指针可以先定义后绑定到（指向）某个对象，并且可以置为NULL；引用必须在定义的时候绑定到某对象。</li>
-<li>指针可以改变指向的对象，引用在不能改变绑定的对象。（有没有觉得1、2两个特点跟const指针很像？）</li>
-<li>通过引用可以像被绑定的对象本身一样操作，指针不可以。</li>
-<li>对指针进行sizeof操作得到的是指针本身占用的内存大小，32位系统是4字节，64位系统是8个字节； 对引用进行sizeof操作得到的是被绑定到的变量占用的内存大小。</li>
-<li>指针可以有二级、三级等多级指针，引用没有。</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/03/15/C++/%E6%8C%87%E9%92%88%E5%92%8C%E5%BC%95%E7%94%A8-md/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/03/15/C++/%E8%AE%B0%E4%B8%80%E4%B8%AAbug-1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/03/15/C++/%E8%AE%B0%E4%B8%80%E4%B8%AAbug-1/" class="post-title-link" itemprop="url">记一个输入缓冲bug</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-03-15 09:21:45" itemprop="dateCreated datePublished" datetime="2019-03-15T09:21:45+08:00">2019-03-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在论坛上看到一个同学贴的一段代码如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> num, cnt, sum = <span class="number">0</span>;</span><br><span class="line">    cnt = <span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>, &amp;num);</span><br><span class="line">    <span class="keyword">while</span> (cnt != <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;cnt = %d\n&quot;</span>, cnt);</span><br><span class="line">        cnt = <span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>, &amp;num);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/03/15/C++/%E8%AE%B0%E4%B8%80%E4%B8%AAbug-1/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/03/13/DataStructure/%E8%BF%94%E5%9B%9E%E5%85%88%E5%BA%8F%E9%81%8D%E5%8E%86%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E4%B8%AA%E8%8A%82%E7%82%B9/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/03/13/DataStructure/%E8%BF%94%E5%9B%9E%E5%85%88%E5%BA%8F%E9%81%8D%E5%8E%86%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E4%B8%AA%E8%8A%82%E7%82%B9/" class="post-title-link" itemprop="url">返回先序遍历的最后一个节点</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-03-13 16:50:29" itemprop="dateCreated datePublished" datetime="2019-03-13T16:50:29+08:00">2019-03-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p>设计算法，返回二叉树T的先序序列的最后一个节点，要求非递归，不能使用栈。</p>
-</blockquote>
-<p>先序遍历先遍历根节点，然后遍历左子树，最后遍历右子树。因此如果有右子树的话，最后一个节点肯定在右子树里面，一直往右走就可以，如果没有右子树的话，最后一个节点肯定在左子树，往左走一步就可以，一直迭代下去直到没有子节点为止。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">TreeNode</span> :</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        self.left = <span class="literal">None</span></span><br><span class="line">        self.right = <span class="literal">None</span></span><br><span class="line">        self.val = x</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">getLastNodeOfPreorderTravel</span>(<span class="params">self, root</span>):</span></span><br><span class="line">        tmp = root</span><br><span class="line">        <span class="keyword">while</span>(tmp):</span><br><span class="line">            <span class="keyword">if</span> tmp.right:</span><br><span class="line">                tmp = tmp.right</span><br><span class="line">            <span class="keyword">elif</span> tmp.left:</span><br><span class="line">                tmp = tmp.left</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">return</span> tmp</span><br></pre></td></tr></table></figure>
-
-<p>那么相应的，我们可以设计出算法返回中序遍历序列的最后一个节点。</p>
-<p>中序遍历就是先遍历左子树，然后遍历根节点，最后遍历右子树。因此如果没有右子树，那么根节点就是最后一个节点；如果有右子树，最后一个节点就在右子树中。迭代下去，找到没有子节点的节点返回即可。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">getLastNodeOfPreorderTravel</span>(<span class="params">self, root</span>):</span></span><br><span class="line">    tmp = root</span><br><span class="line">    <span class="keyword">while</span>(tmp):</span><br><span class="line">        <span class="keyword">if</span> tmp.right:</span><br><span class="line">            tmp = tmp.right</span><br><span class="line">        <span class="keyword">else</span>:    </span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">    <span class="keyword">return</span> tmp</span><br></pre></td></tr></table></figure>
-
-<p>最后，你可能会想如何获得后序遍历的最后一个节点呢？后序遍历顺序是先遍历左子树，后遍历右子树，最后遍历根节点，因此最后一个节点必然是根节点。直接返回即可。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/03/10/C++/%E4%B8%A4%E7%A7%8D%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E7%9A%84%E6%95%88%E7%8E%87%E5%AF%B9%E6%AF%94/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/03/10/C++/%E4%B8%A4%E7%A7%8D%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E7%9A%84%E6%95%88%E7%8E%87%E5%AF%B9%E6%AF%94/" class="post-title-link" itemprop="url">C++两种构造方法的效率对比</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-03-10 16:50:29" itemprop="dateCreated datePublished" datetime="2019-03-10T16:50:29+08:00">2019-03-10</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 19:14:38" itemprop="dateModified" datetime="2020-10-17T19:14:38+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><img src="/img/1.png"></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/03/10/C++/%E4%B8%A4%E7%A7%8D%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95%E7%9A%84%E6%95%88%E7%8E%87%E5%AF%B9%E6%AF%94/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2019/03/09/C++/%E8%87%AA%E5%B7%B1%E5%8A%A8%E6%89%8B%E5%AE%9E%E7%8E%B0vector/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Vincent Zheng">
-      <meta itemprop="description" content="A bug machine made in HUST">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Vincent's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/03/09/C++/%E8%87%AA%E5%B7%B1%E5%8A%A8%E6%89%8B%E5%AE%9E%E7%8E%B0vector/" class="post-title-link" itemprop="url">自己动手实现vector</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-03-09 14:11:29" itemprop="dateCreated datePublished" datetime="2019-03-09T14:11:29+08:00">2019-03-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-10-17 15:23:17" itemprop="dateModified" datetime="2020-10-17T15:23:17+08:00">2020-10-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>有了实现string的基础，在加上一点点模板的知识，就可以自己动手实现一个vector了。下面是我实现的代码，比较简单。有点犯懒了，讲解以后再写吧！</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/03/09/C++/%E8%87%AA%E5%B7%B1%E5%8A%A8%E6%89%8B%E5%AE%9E%E7%8E%B0vector/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
-  
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
-  </nav>
 
 
 
@@ -993,6 +334,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#intro-to-smart-pointer-and-move-semantics"><span class="nav-number">1.</span> <span class="nav-text">intro to smart pointer and move semantics</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%A3%B8%E6%8C%87%E9%92%88%E5%AF%BC%E8%87%B4%E7%9A%84%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">1. 裸指针导致的内存泄漏问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E7%B1%BB%E5%8F%AF%E4%BB%A5%E8%A7%A3%E5%86%B3%E8%BF%99%E7%B1%BB%E9%97%AE%E9%A2%98%E5%90%97%EF%BC%9F"><span class="nav-number">1.2.</span> <span class="nav-text">2. 智能指针类可以解决这类问题吗？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Auto-ptr1%E7%9A%84%E4%B8%80%E4%B8%AA%E4%B8%A5%E9%87%8D%E7%BC%BA%E9%99%B7"><span class="nav-number">1.3.</span> <span class="nav-text">3. Auto_ptr1的一个严重缺陷</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-Move-semantics"><span class="nav-number">1.4.</span> <span class="nav-text">4. Move semantics</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-std-auto-ptr%E4%BB%A5%E5%8F%8A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E9%81%BF%E5%85%8D%E4%BD%BF%E7%94%A8%E5%AE%83"><span class="nav-number">1.5.</span> <span class="nav-text">5. std::auto_ptr以及为什么要避免使用它</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E6%9B%B4%E8%BF%9B%E4%B8%80%E6%AD%A5"><span class="nav-number">1.6.</span> <span class="nav-text">6. 更进一步</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">1.7.</span> <span class="nav-text">7. 参考资料</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
